@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TextInput, Animated } from 'react-native'
+import { StyleSheet, Text, View, Image, TextInput, Animated, TouchableOpacity } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -14,18 +14,43 @@ const DUMMY_DATA = [
     "Udipi Uphar",
 ]
 
+const DUMMY_LOCATION = [
+    'Rajajinagar',
+    "Malleswaram",
+    "Basaveswarnagar",
+    "Sadashivnagar",
+    "Banashankari",
+    "Basavangudi",
+    "Indiranagar",
+    "Halsuru",
+    "Hebbal",
+    "Nehrunagar"
+]
 
 const DropDownItem = (props) => {
-    return <View style={styles.dropdownitem}>
+    return <TouchableOpacity style={styles.dropdownitem} onPress={() => props.goToNext()}>
         <Text>{props.name}</Text>
-    </View>
+    </TouchableOpacity>
 }
 
-const MainScreen = () => {
+const MainScreen = ({ navigation }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const popInAnim = useRef(new Animated.Value(-200)).current;
     const popOutAnim = useRef(new Animated.Value(0)).current;
-    const [restaurant, setRestaurant] = useState("asdf");
+    const searchBasedAnim = useRef(new Animated.Value(-400)).current;
+    const textBoxAnim = useRef(new Animated.Value(-100)).current;
+    const [restaurant, setRestaurant] = useState("");
+    const [activeTextBox, setActiveTextBox] = useState("location");
+    const [location, setLocation] = useState("");
+
+    const handleLocationText = (text) => {
+        if (text.length === 1) {
+            popOutSearch();
+        } else if (text.length === 0) {
+            popInSearch();
+        }
+        setLocation(text);
+    }
     const handleRestaurantText = (text) => {
         if (text.length === 1) {
             popOutSearch();
@@ -35,13 +60,16 @@ const MainScreen = () => {
         setRestaurant(text);
     }
     const filteredRestaurants = DUMMY_DATA.filter((ele) => {
-        // console.log(ele.toLowerCase());
         return ele.toLowerCase().includes(restaurant.toLowerCase());
+    })
+    const filteredLocations = DUMMY_LOCATION.filter((ele) => {
+        return ele.toLowerCase().includes(location.toLowerCase());
     })
     const fadeIn = () => {
         Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 2000,
+            duration: 1000,
+            delay: 1000,
             useNativeDriver: true,
         }).start();
     }
@@ -55,20 +83,45 @@ const MainScreen = () => {
     const popOutSearch = () => {
         Animated.timing(popOutAnim, {
             toValue: 100,
-            duration: 500,
+            duration: 300,
             useNativeDriver: true,
         }).start();
     }
     const popInSearch = () => {
         Animated.timing(popOutAnim, {
             toValue: 0,
-            duration: 500,
+            duration: 300,
             useNativeDriver: true,
         }).start();
     }
+    const popInSearchBased = () => {
+        Animated.timing(searchBasedAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+        }).start();
+    }
+    const popInSeachText = () => {
+        Animated.timing(textBoxAnim, {
+            toValue: 0,
+            duration: 500,
+            delay: 1000,
+            useNativeDriver: true,
+        }).start();
+    }
+
+    const selectLocation = () => {
+        setActiveTextBox("location");
+    }
+    const selectReview = () => {
+        setActiveTextBox("review");
+    }
+
     useEffect(() => {
         fadeIn();
         popIn();
+        popInSearchBased();
+        popInSeachText();
     }, [])
     return (
         <View style={styles.container}>
@@ -82,24 +135,57 @@ const MainScreen = () => {
                 <Image source={require("../assets/images/star.png")} style={styles.logos} />
                 <Image source={require("../assets/images/McDonalds-logo.png")} style={styles.logos} />
             </Animated.View>
-            <View style={{ width: "90%" }}>
-                <View style={{ backgroundColor: "rgba(255,200,0,1.0)" }}>
-                    <View style={styles.textInputContainer}>
-                        <TextInput style={styles.searchRestaurantText} placeholder={"Search a restaurant..."} onChangeText={handleRestaurantText} />
-                        <Animated.View style={{ transform: [{ translateX: popOutAnim }] }}>
-                            <FontAwesome name="search" size={24} color="black" />
-                        </Animated.View>
+            <Animated.View style={{ width: "100%", transform: [{ translateY: searchBasedAnim }] }}>
+                <Animated.View style={[styles.searchBasedContainer]}>
+                    <Text style={styles.searchBasedTitle}>Search Based On...</Text>
+                    <View style={styles.searchBasedButtonContainer}>
+                        <TouchableOpacity style={styles.searchBasedButton} onPress={selectLocation}>
+                            <Text style={styles.searchBasedButtonText}>Location</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.searchBasedButton}>
+                            <Text style={styles.searchBasedButtonText} onPress={() => navigation.navigate("RatingRec")}>Rating</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.searchBasedButton} onPress={selectReview}>
+                            <Text style={styles.searchBasedButtonText}>Review</Text>
+                        </TouchableOpacity>
                     </View>
+                </Animated.View>
+                <View style={{ backgroundColor: "rgba(255, 200, 0, 1.0)", transform: [{ translateY: textBoxAnim }] }}>
+                    {
+                        activeTextBox === "location" ?
+                            <View style={styles.textInputContainer}>
+                                <TextInput style={styles.searchRestaurantText} placeholder={"Search a Location..."} onChangeText={handleLocationText} />
+                                <Animated.View style={{ transform: [{ translateX: popOutAnim }] }}>
+                                    <FontAwesome name="search" size={24} color="black" />
+                                </Animated.View>
+                            </View> :
+                            <View style={styles.textInputContainer}>
+                                <TextInput style={styles.searchRestaurantText} placeholder={"Search a Restaurant..."} onChangeText={handleRestaurantText} />
+                                <Animated.View style={{ transform: [{ translateX: popOutAnim }] }}>
+                                    <FontAwesome name="search" size={24} color="black" />
+                                </Animated.View>
+                            </View>
+                    }
                 </View>
                 <View style={styles.dropDownContainer}>
                     {
-                        restaurant.length !== 0 &&
-                        filteredRestaurants.map((rest, index) => {
-                            return (<DropDownItem name={rest} key={index} />)
-                        })
+                        activeTextBox === "location" ?
+                            (
+                                location.length !== 0 &&
+                                filteredLocations.map((rest, index) => {
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec")} />)
+                                })
+                            ) :
+                            (
+                                restaurant.length !== 0 &&
+                                filteredRestaurants.map((rest, index) => {
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("ReviewRec")} />)
+                                })
+
+                            )
                     }
                 </View>
-            </View>
+            </Animated.View>
         </View >
     )
 }
@@ -109,7 +195,6 @@ export default MainScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
         alignItems: 'center',
         padding: 20,
         fontFamily: "happy-food",
@@ -186,5 +271,40 @@ const styles = StyleSheet.create({
         width: "100%",
         justifyContent: "center",
         alignItems: "center",
+    },
+    searchBasedTitle: {
+        fontFamily: "happy-food",
+        fontSize: '15px',
+        textAlign: "center",
+        color: "rgba(255,100,0,1.0)",
+    },
+    searchBasedContainer: {
+        padding: 10,
+        borderWidth: 3,
+        marginBottom: 10,
+        width: '100%',
+        justifyContent: "center",
+        flexDirection: "column",
+        borderColor: "rgba(255,100,0,1.0)",
+        backgroundColor: "rgba(255,200,0,1.0)",
+        borderRadius: 10,
+    },
+    searchBasedButtonContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        margin: 10,
+    },
+    searchBasedButton: {
+        backgroundColor: "rgba(255,0,0,1.0)",
+        padding: 5,
+        borderRadius: 10,
+        width: "30%",
+    },
+    searchBasedButtonText: {
+        textAlign: "center",
+        fontFamily: "happy-food",
+        color: "white",
+        fontSize: 12,
+        fontWeight: "300",
     }
 })

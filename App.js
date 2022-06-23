@@ -6,6 +6,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AppLoading from 'expo-app-loading';
 import MainScreen from './componets/MainScreen';
 import * as Font from "expo-font";
+import LocationRecommendationScreen from "./componets/LocationRecommendationSceen";
+import RatingRecommendationScreen from './componets/RatingRecommendationScreen';
+import ReviewRecommendationScreen from './componets/ReviewRecommendationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +26,12 @@ export default function App() {
             <NavigationContainer>
                 <Stack.Navigator>
                     <Stack.Screen name="Home" component={MainScreen} options={{ headerShown: false }} />
+                    <Stack.Screen name="LocationRec" component={LocationRecommendationScreen} options={{ headerShown: true, headerTitle: "Location Based Recommendation", headerStyle: { backgroundColor: "rgba(255,100,0,1.0)" } }} />
+                    <Stack.Screen name="ReviewRec" component={ReviewRecommendationScreen} options={{ headerTitle: "Review Based Recommendation", headerStyle: { backgroundColor: "rgba(255,100,0,1.0)", fontFamily: "happy-food" } }} />
+                    <Stack.Screen name="RatingRec" component={RatingRecommendationScreen} options={{
+                        headerTitle: "Rating Based Recommendation",
+                        headerStyle: { backgroundColor: "rgba(255,100,0,1.0)" },
+                    }} />
                 </Stack.Navigator>
             </NavigationContainer>
         );
@@ -41,47 +50,4 @@ export default function App() {
     }
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        padding: 20,
-        fontFamily: "happy-food",
-        backgroundColor: "rgba(255,200,0,1.0)",
-    },
-    title: {
-        fontFamily: "happy-food",
-        fontSize: "20px",
-        textAlign: "center",
-        color: "rgba(255,200,0,1.0)"
-    },
-    titleContainer: {
-        backgroundColor: "rgba(255,0,0,1.0)",
-        padding: 10,
-        borderRadius: 10,
-    },
-    loading: {
-        width: "50px",
-        height: "50px",
-        borderRadius: "50%",
-        borderColor: "black",
-        borderBottomWidth: "0px",
-        borderLeftWidth: "0px",
-        borderRightWidth: "5px",
-        borderTopWidth: "5px",
-    },
-    logos: {
-        width: "50px",
-        minHeight: "50px",
-        borderRadius: "10px",
-    },
-    logosContainer: {
-        padding: 10,
-        marginVertical: 20,
-        width: '100%',
-        height: "10%",
-        flexDirection: "row",
-        justifyContent: "space-between",
-    }
-});
+const styles = StyleSheet.create({});
