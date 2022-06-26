@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View, ScrollView } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { useSelector } from 'react-redux';
+import axios from "axios";
 
 const DUMMYDATA = [
     {
@@ -25,10 +27,11 @@ const Dummy = DUMMYDATA.map((ele) => {
     return ele;
 })
 const RecommendationScreen = () => {
+    const locationRecommendation = useSelector((state) => state.locationRecommendations);
     return (
         <ScrollView contentContainerStyle={styles.container}>
             {
-                Dummy.map((rest, index) => {
+                locationRecommendation.map((rest, index) => {
                     return (
                         <View style={styles.restaurantContainer} key={index}>
                             <View style={styles.restaurantRow}>

@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View, Image, TextInput, Animated, TouchableOpacity } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-
-
+import { useDispatch } from 'react-redux';
+import { useSelector } from "react-redux"
+import { actionContants } from '../redux/actions/actions';
+import axios from "axios";
 const DUMMY_DATA = [
     "Truffles",
     "Pai Vihar",
@@ -28,7 +30,23 @@ const DUMMY_LOCATION = [
 ]
 
 const DropDownItem = (props) => {
-    return <TouchableOpacity style={styles.dropdownitem} onPress={() => props.goToNext()}>
+    const dispatch = useDispatch();
+    const fetchRestLocation = async (name) => {
+        const response = await axios({
+            method: "GET",
+            url: `http://localhost:9000/restaurant-on-location?location=${name}`,
+            data: null,
+        });
+        console.log(response);
+        dispatch({
+            type: actionContants.UPDATE_LOCATION_RECOMMENDATION,
+            payload: response.data.data,
+        })
+    }
+    return <TouchableOpacity style={styles.dropdownitem} onPress={() => {
+        fetchRestLocation(props.name);
+        props.goToNext()
+    }}>
         <Text>{props.name}</Text>
     </TouchableOpacity>
 }
@@ -42,7 +60,7 @@ const MainScreen = ({ navigation }) => {
     const [restaurant, setRestaurant] = useState("");
     const [activeTextBox, setActiveTextBox] = useState("location");
     const [location, setLocation] = useState("");
-
+    const allLocations = useSelector((state) => state.allLocations);
     const handleLocationText = (text) => {
         if (text.length === 1) {
             popOutSearch();
@@ -59,7 +77,7 @@ const MainScreen = ({ navigation }) => {
         }
         setRestaurant(text);
     }
-    const filteredRestaurants = DUMMY_DATA.filter((ele) => {
+    const filteredRestaurants = allLocations.filter((ele) => {
         return ele.toLowerCase().includes(restaurant.toLowerCase());
     })
     const filteredLocations = DUMMY_LOCATION.filter((ele) => {
@@ -154,13 +172,13 @@ const MainScreen = ({ navigation }) => {
                     {
                         activeTextBox === "location" ?
                             <View style={styles.textInputContainer}>
-                                <TextInput style={styles.searchRestaurantText} placeholder={"Search a Location..."} onChangeText={handleLocationText} />
+                                <TextInput style={styles.searchRestaurantText} placeholder={"Search a Location..."} onChangeText={handleLocationText} value={location} />
                                 <Animated.View style={{ transform: [{ translateX: popOutAnim }] }}>
                                     <FontAwesome name="search" size={24} color="black" />
                                 </Animated.View>
                             </View> :
                             <View style={styles.textInputContainer}>
-                                <TextInput style={styles.searchRestaurantText} placeholder={"Search a Restaurant..."} onChangeText={handleRestaurantText} />
+                                <TextInput style={styles.searchRestaurantText} placeholder={"Search a Restaurant..."} onChangeText={handleRestaurantText} value={restaurant} />
                                 <Animated.View style={{ transform: [{ translateX: popOutAnim }] }}>
                                     <FontAwesome name="search" size={24} color="black" />
                                 </Animated.View>
@@ -172,8 +190,8 @@ const MainScreen = ({ navigation }) => {
                         activeTextBox === "location" ?
                             (
                                 location.length !== 0 &&
-                                filteredLocations.map((rest, index) => {
-                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec")} />)
+                                filteredLocations.slice(0, 8).map((rest, index) => {
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec", { area: rest })} />)
                                 })
                             ) :
                             (
