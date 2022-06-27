@@ -24,6 +24,12 @@ const MainApplication = () => {
             payload: data,
         })
     }
+    const updateAllAreas = (data) => {
+        dispatch({
+            type: actionContants.UPDATE_ALL_AREAS,
+            payload: data,
+        });
+    }
     const { doRequest, errors, isLoading } = useRequests("/get-locations", null, updateAllLocations, null);
     useEffect(async () => {
         const response = await axios({
@@ -31,7 +37,14 @@ const MainApplication = () => {
             url: `http://localhost:9000/get-locations`,
             data: null,
         });
-        console.log(response);
+        updateAllLocations(response.data.data);
+        axios({
+            method: "GET",
+            url: "http://localhost:9000/get-areas",
+            data: null,
+        }).then((resp) => resp.data.data).then((data) => {
+            updateAllAreas(data);
+        })
     }, [])
     return (
         <NavigationContainer>

@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View, ScrollView } from 'react-native'
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from "axios";
+import { actionContants } from '../redux/actions/actions';
+import RestaurantItem from './RestaurantItem';
 
 const DUMMYDATA = [
     {
@@ -27,30 +29,31 @@ const Dummy = DUMMYDATA.map((ele) => {
     return ele;
 })
 const RecommendationScreen = () => {
+    const dispatch = useDispatch();
+    const fetchRestLocation = async (name) => {
+        const response = await axios({
+            method: "GET",
+            url: `http://localhost:9000/restaurant-on-location?location=${name}`,
+            data: null,
+        });
+        console.log(response);
+        dispatch({
+            type: actionContants.UPDATE_LOCATION_RECOMMENDATION,
+            payload: response.data.data,
+        })
+    }
+    useEffect(() => {
+        // fetchRestLocation("Whitefield");
+    }, [])
     const locationRecommendation = useSelector((state) => state.locationRecommendations);
+    locationRecommendation.sort((a, b) => b["Mean Rating"] - a["Mean Rating"]);
     return (
         <ScrollView contentContainerStyle={styles.container}>
             {
                 locationRecommendation.map((rest, index) => {
                     return (
-                        <View style={styles.restaurantContainer} key={index}>
-                            <View style={styles.restaurantRow}>
-                                <Text style={styles.rowTitle}>Name :</Text>
-                                <Text style={styles.rowContent}>{rest.name}</Text>
-                            </View>
-                            <View style={styles.restaurantRow}>
-                                <Text style={styles.rowTitle}>Cuisine:</Text>
-                                <Text style={styles.rowContent}>{rest.cuisine}</Text>
-                            </View>
-                            <View style={styles.restaurantRow}>
-                                <Text style={styles.rowTitle}>Rating :</Text>
-                                <Text style={styles.rowContent}>{rest.rating}</Text>
-                            </View>
-                            <View style={styles.restaurantRow}>
-                                <Text style={styles.rowTitle}>Location :</Text>
-                                <Text style={styles.rowContent}>{rest.location}</Text>
-                            </View>
-                        </View>
+                        <RestaurantItem rest={rest} key={index} />
+
                     )
                 })
             }
@@ -62,30 +65,9 @@ export default RecommendationScreen;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        // flex: 1,
         alignItems: "center",
         backgroundColor: "rgba(255,200,0,1.0)",
         padding: 20,
     },
-    restaurantContainer: {
-        width: "100%",
-        height: "150px",
-        margin: 10,
-        padding: 20,
-        backgroundColor: "rgba(255,255,255,0.6)",
-        borderRadius: 10,
-    },
-    restaurantRow: {
-        flexDirection: "row",
-    },
-    rowTitle: {
-        // fontFamily: "happy-food",
-        fontSize: 15,
-        paddingHorizontal: 10,
-        fontWeight: 700,
-    },
-    rowContent: {
-        // fontFamily: "happy-food",
-        fontSize: 15,
-    }
 })

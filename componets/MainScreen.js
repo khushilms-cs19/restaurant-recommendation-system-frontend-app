@@ -43,8 +43,24 @@ const DropDownItem = (props) => {
             payload: response.data.data,
         })
     }
+    const fetchRestReview = async (name) => {
+        const response = await axios({
+            method: "GET",
+            url: `http://localhost:9000/recommend-me?restname=${name}`,
+            data: null,
+        });
+        console.log(response);
+        dispatch({
+            type: actionContants.UPDATE_REVIEW_RECOMMENDATION,
+            payload: response.data.data,
+        })
+    }
     return <TouchableOpacity style={styles.dropdownitem} onPress={() => {
-        fetchRestLocation(props.name);
+        if (props.type === "restaurant") {
+            fetchRestReview(props.name);
+        } else {
+            fetchRestLocation(props.name);
+        }
         props.goToNext()
     }}>
         <Text>{props.name}</Text>
@@ -60,6 +76,7 @@ const MainScreen = ({ navigation }) => {
     const [restaurant, setRestaurant] = useState("");
     const [activeTextBox, setActiveTextBox] = useState("location");
     const [location, setLocation] = useState("");
+    const allAreas = useSelector((state) => state.allAreas);
     const allLocations = useSelector((state) => state.allLocations);
     const handleLocationText = (text) => {
         if (text.length === 1) {
@@ -77,12 +94,18 @@ const MainScreen = ({ navigation }) => {
         }
         setRestaurant(text);
     }
-    const filteredRestaurants = allLocations.filter((ele) => {
-        return ele.toLowerCase().includes(restaurant.toLowerCase());
-    })
-    const filteredLocations = DUMMY_LOCATION.filter((ele) => {
-        return ele.toLowerCase().includes(location.toLowerCase());
-    })
+    let filteredLocations;
+    let filteredRestaurants;
+    if (activeTextBox == "location") {
+        filteredLocations = allAreas.filter((ele) => {
+            return ele.toLowerCase().includes(location.toLowerCase());
+        });
+    } else {
+        filteredRestaurants = allLocations.filter((ele) => {
+            return ele.toLowerCase().includes(restaurant.toLowerCase());
+        });
+    }
+
     const fadeIn = () => {
         Animated.timing(fadeAnim, {
             toValue: 1,
@@ -191,13 +214,13 @@ const MainScreen = ({ navigation }) => {
                             (
                                 location.length !== 0 &&
                                 filteredLocations.slice(0, 8).map((rest, index) => {
-                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec", { area: rest })} />)
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec")} type={"location"} />)
                                 })
                             ) :
                             (
                                 restaurant.length !== 0 &&
                                 filteredRestaurants.map((rest, index) => {
-                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("ReviewRec")} />)
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("ReviewRec")} type={"restaurant"} />)
                                 })
 
                             )
