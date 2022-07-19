@@ -25,17 +25,6 @@ const fetchFonts = () => {
 
 export default function App() {
     const [fontsFetched, setFontsFetched] = useState(false);
-    // const dispatch = useDispatch();
-    // const updateAllLocations = (data) => {
-    //     dispatch({
-    //         type: actionContants.UPDATE_ALL_LOCATIONS,
-    //         payload: data,
-    //     })
-    // }
-    // const { doRequest, errors, isLoading } = useRequests("/get-locations", null, null, null);
-    // useEffect(() => {
-    //     doRequest(null, "none");
-    // }, [])
     if (!fontsFetched) {
         return <AppLoading
             startAsync={fetchFonts}

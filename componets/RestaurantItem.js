@@ -1,12 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
-
+/*
+    name
+    system design
+    future scope
+*/
 const RestaurantItem = ({ rest }) => {
     return (
         <View style={styles.restaurantContainer}>
             <View style={styles.rating}>
                 <Text style={styles.rowTitle}>Rating: </Text>
-                <Text style={styles.ratingText}>{rest["Mean Rating"]}</Text>
+                <Text style={styles.ratingText}>{
+                    rest["Mean Rating"].length <= 4 ?
+                        rest["Mean Rating"] :
+                        rest["Mean Rating"].split("\n")[0].split("    ")[1]
+                }</Text>
                 <View>
 
                 </View>
@@ -21,12 +29,12 @@ const RestaurantItem = ({ rest }) => {
                         }</Text>
                     </View>
                     <View style={styles.restaurantRow}>
-                        <Text style={styles.rowContent}>In {rest.location}</Text>
+                        <Text style={styles.rowContent}>In {rest.location.replace("Name: location, dtype: object", "").replace(rest.name, "")}</Text>
                     </View>
                 </View>
                 <View style={styles.cuisineMain}>
                     <Text style={styles.rowTitle}>Cuisine:</Text>
-                    <Text style={styles.rowContent}>{rest.cuisines.reduce((final, cu) => final + cu + ", ", "")}</Text>
+                    <Text style={styles.rowContent}>{rest.cuisines.slice(0, 2).reduce((final, cu) => final + cu + ", ", "")}</Text>
                 </View>
             </View>
         </View>

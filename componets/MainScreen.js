@@ -5,6 +5,8 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from "react-redux"
 import { actionContants } from '../redux/actions/actions';
 import axios from "axios";
+import { useCallback } from 'react';
+import debounce from 'lodash.debounce';
 const DUMMY_DATA = [
     "Truffles",
     "Pai Vihar",
@@ -32,27 +34,41 @@ const DUMMY_LOCATION = [
 const DropDownItem = (props) => {
     const dispatch = useDispatch();
     const fetchRestLocation = async (name) => {
-        const response = await axios({
+        axios({
             method: "GET",
             url: `http://localhost:9000/restaurant-on-location?location=${name}`,
             data: null,
+        }).then((resp) => {
+            console.log(resp);
+            dispatch({
+                type: actionContants.UPDATE_LOCATION_RECOMMENDATION,
+                payload: resp.data.data,
+            })
+            props.goToNext();
+        }).catch((err) => {
+            console.log(err);
+            props.setClearFetchError("There was some error fetching data.");
         });
-        console.log(response);
-        dispatch({
-            type: actionContants.UPDATE_LOCATION_RECOMMENDATION,
-            payload: response.data.data,
-        })
     }
     const fetchRestReview = async (name) => {
-        const response = await axios({
+        axios({
             method: "GET",
             url: `http://localhost:9000/recommend-me?restname=${name}`,
             data: null,
-        });
-        console.log(response);
-        dispatch({
-            type: actionContants.UPDATE_REVIEW_RECOMMENDATION,
-            payload: response.data.data,
+        }).then((resp) => {
+            console.log(resp);
+            dispatch({
+                type: actionContants.UPDATE_REVIEW_RECOMMENDATION,
+                payload: resp.data.data,
+            })
+            props.goToNext();
+        }).catch((err) => {
+            console.log(err);
+            dispatch({
+                type: actionContants.UPDATE_REVIEW_RECOMMENDATION,
+                payload: [],
+            });
+            props.setClearFetchError("There was some error fetching data.");
         })
     }
     return <TouchableOpacity style={styles.dropdownitem} onPress={() => {
@@ -61,23 +77,32 @@ const DropDownItem = (props) => {
         } else {
             fetchRestLocation(props.name);
         }
-        props.goToNext()
     }}>
         <Text>{props.name}</Text>
     </TouchableOpacity>
 }
 
 const MainScreen = ({ navigation }) => {
+    let filteredLocations = [];
+    let filteredRestaurants = [];
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const popInAnim = useRef(new Animated.Value(-200)).current;
     const popOutAnim = useRef(new Animated.Value(0)).current;
     const searchBasedAnim = useRef(new Animated.Value(-400)).current;
     const textBoxAnim = useRef(new Animated.Value(-100)).current;
     const [restaurant, setRestaurant] = useState("");
-    const [activeTextBox, setActiveTextBox] = useState("location");
+    const [activeTextBox, setActiveTextBox] = useState("nothing");
     const [location, setLocation] = useState("");
+    const [fetchError, setFetchError] = useState("");
     const allAreas = useSelector((state) => state.allAreas);
     const allLocations = useSelector((state) => state.allLocations);
+    const [filteredListRestaurants, setFilteredListRestaurants] = useState([]);
+    const setClearFetchError = (error) => {
+        setFetchError(error);
+        setTimeout(() => {
+            setFetchError("");
+        }, 3000);
+    }
     const handleLocationText = (text) => {
         if (text.length === 1) {
             popOutSearch();
@@ -91,20 +116,26 @@ const MainScreen = ({ navigation }) => {
             popOutSearch();
         } else if (text.length === 0) {
             popInSearch();
+            setFilteredListRestaurants([]);
         }
         setRestaurant(text);
     }
-    let filteredLocations;
-    let filteredRestaurants;
+    const filterRestaurants = () => {
+        filteredRestaurants = allLocations.filter((ele) => {
+            return ele.toLowerCase().includes(restaurant.toLowerCase());
+        });
+        setFilteredListRestaurants(filteredRestaurants);
+    }
     if (activeTextBox == "location") {
         filteredLocations = allAreas.filter((ele) => {
             return ele.toLowerCase().includes(location.toLowerCase());
         });
-    } else {
-        filteredRestaurants = allLocations.filter((ele) => {
-            return ele.toLowerCase().includes(restaurant.toLowerCase());
-        });
     }
+    //  else {
+    //     filteredRestaurants = allLocations.filter((ele) => {
+    //         return ele.toLowerCase().includes(restaurant.toLowerCase());
+    //     });
+    // }
 
     const fadeIn = () => {
         Animated.timing(fadeAnim, {
@@ -176,6 +207,12 @@ const MainScreen = ({ navigation }) => {
                 <Image source={require("../assets/images/star.png")} style={styles.logos} />
                 <Image source={require("../assets/images/McDonalds-logo.png")} style={styles.logos} />
             </Animated.View>
+            <View>
+                {
+                    fetchError.length > 0 &&
+                    <Text style={styles.errorStyle}>*{fetchError}</Text>
+                }
+            </View>
             <Animated.View style={{ width: "100%", transform: [{ translateY: searchBasedAnim }] }}>
                 <Animated.View style={[styles.searchBasedContainer]}>
                     <Text style={styles.searchBasedTitle}>Search Based On...</Text>
@@ -183,9 +220,9 @@ const MainScreen = ({ navigation }) => {
                         <TouchableOpacity style={styles.searchBasedButton} onPress={selectLocation}>
                             <Text style={styles.searchBasedButtonText}>Location</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.searchBasedButton}>
+                        {/* <TouchableOpacity style={styles.searchBasedButton}>
                             <Text style={styles.searchBasedButtonText} onPress={() => navigation.navigate("RatingRec")}>Rating</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         <TouchableOpacity style={styles.searchBasedButton} onPress={selectReview}>
                             <Text style={styles.searchBasedButtonText}>Review</Text>
                         </TouchableOpacity>
@@ -200,11 +237,21 @@ const MainScreen = ({ navigation }) => {
                                     <FontAwesome name="search" size={24} color="black" />
                                 </Animated.View>
                             </View> :
-                            <View style={styles.textInputContainer}>
+                            <View style={[styles.textInputContainer, { backgroundColor: "rgba(255,200,0,1.0)" }]}>
                                 <TextInput style={styles.searchRestaurantText} placeholder={"Search a Restaurant..."} onChangeText={handleRestaurantText} value={restaurant} />
-                                <Animated.View style={{ transform: [{ translateX: popOutAnim }] }}>
+                                <TouchableOpacity onPress={() => filterRestaurants()} style={{
+                                    transform: [{ translateX: popOutAnim }], backgroundColor: "rgba(255,100,0,1.0)", width: "50px",
+                                    padding: "7px",
+                                    borderRadius: "15px",
+                                    marginHorizontal: "10px",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                }}
+
+                                >
                                     <FontAwesome name="search" size={24} color="black" />
-                                </Animated.View>
+                                </TouchableOpacity>
                             </View>
                     }
                 </View>
@@ -214,13 +261,13 @@ const MainScreen = ({ navigation }) => {
                             (
                                 location.length !== 0 &&
                                 filteredLocations.slice(0, 8).map((rest, index) => {
-                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec")} type={"location"} />)
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("LocationRec")} type={"location"} setClearFetchError={setClearFetchError} />)
                                 })
                             ) :
                             (
                                 restaurant.length !== 0 &&
-                                filteredRestaurants.map((rest, index) => {
-                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("ReviewRec")} type={"restaurant"} />)
+                                filteredListRestaurants.map((rest, index) => {
+                                    return (<DropDownItem name={rest} key={index} goToNext={() => navigation.navigate("ReviewRec")} type={"restaurant"} setClearFetchError={setClearFetchError} />)
                                 })
 
                             )
@@ -312,6 +359,8 @@ const styles = StyleSheet.create({
         width: "100%",
         justifyContent: "center",
         alignItems: "center",
+        height: "40%",
+        overflowY: "scroll",
     },
     searchBasedTitle: {
         fontFamily: "happy-food",
@@ -347,5 +396,10 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 12,
         fontWeight: "300",
+    },
+    errorStyle: {
+        fontFamily: "happy-food",
+        fontSize: 12,
+        color: "red",
     }
 })

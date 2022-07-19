@@ -51,9 +51,9 @@ const MainApplication = () => {
             <Stack.Navigator>
                 <Stack.Screen name="Home" component={MainScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="LocationRec" component={LocationRecommendationScreen} options={{ headerShown: true, headerTitle: "Location Based Recommendation", headerStyle: { backgroundColor: "rgba(255,100,0,1.0)" } }} />
-                <Stack.Screen name="ReviewRec" component={ReviewRecommendationScreen} options={{ headerTitle: "Review Based Recommendation", headerStyle: { backgroundColor: "rgba(255,100,0,1.0)", fontFamily: "happy-food" } }} />
+                <Stack.Screen name="ReviewRec" component={ReviewRecommendationScreen} options={{ headerTitle: () => <Text style={{ fontFamily: "happy-food" }}>Review Based Recommendation</Text>, headerStyle: { backgroundColor: "rgba(255,100,0,1.0)", fontFamily: "happy-food" } }} />
                 <Stack.Screen name="RatingRec" component={RatingRecommendationScreen} options={{
-                    headerTitle: "Rating Based Recommendation",
+                    headerTitle: () => <Text style={{ fontFamily: "happy-food" }}>Rating Based Recommendation</Text>,
                     headerStyle: { backgroundColor: "rgba(255,100,0,1.0)" },
                 }} />
             </Stack.Navigator>
